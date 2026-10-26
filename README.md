@@ -4,7 +4,7 @@ A community fork of **Obsidian Web Clipper** that saves directly to **EdgeEver**
 
 保留 Obsidian Clipper 的正文抽取、模板、变量、过滤器、划线、阅读模式、侧栏和剪藏预览；保存为 EdgeEver 中可阅读编辑的笔记，图片上传到笔记附件库。
 
-**Preview / 开发预览版**：本地测试与 Chromium 构建可运行；尚未完成用户真实 EdgeEver 实例和浏览器安装验收。它不是 Obsidian 或 EdgeEver 官方扩展，没有官方商店发布。
+**Preview / 开发预览版**:Chromium 构建与 Edge 安装已验收;Firefox、Safari 和完整跨站验收尚未完成。它不是 Obsidian 或 EdgeEver 官方扩展,没有官方商店发布。
 
 ## 安装与配置
 
@@ -61,4 +61,4 @@ The extension retains broad webpage access for upstream reading/highlighting and
 
 MIT. Original copyright and license are retained in [LICENSE](LICENSE). See [upstream provenance](UPSTREAM.md), [contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md).
 
-This repository is prepared for a future GitHub release; no remote, public repository, marketplace submission or automatic publishing is configured. Add your own repository URL and security contact before publishing. CI only tests and builds; it does not publish.
+The public source repository is [akispho/edgeever-web-clipper](https://github.com/akispho/edgeever-web-clipper). Only the `main` snapshot is published; internal development branches are not part of the public repository. CI only tests and builds and does not publish automatically.

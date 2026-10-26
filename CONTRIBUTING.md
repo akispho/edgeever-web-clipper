@@ -8,4 +8,4 @@ Put EdgeEver protocol changes in `src/utils/edgeever-client.ts`, save behavior i
 
 The default Vitest timezone matches the upstream fixed-date fixture. Production daily notes still use the local browser calendar date.
 
-Before opening a public GitHub repository, choose the repository owner/name and security reporting contact, review the license notices and dependency licenses, and run a fresh release validation. CI does not publish automatically.
+Report security issues through the private advisory link in `SECURITY.md`. CI tests, type-checks, builds and verifies the Chromium extension, but does not publish automatically.

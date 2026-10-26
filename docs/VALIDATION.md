@@ -10,10 +10,11 @@
 - ZIP inspected: root manifest, MIT license and provenance present; no `.ts`, `.map`, logs, `.git`, `.DS_Store` or `node_modules` entries.
 - Local static settings layout inspected in the in-app browser. JavaScript behavior is covered by jsdom settings tests; the static preview is not installed-extension acceptance.
 - Real browser IndexedDB roundtrip passed with synthetic connection data, no network requests and no real credentials. This validates the transaction logic, not cross-browser extension-origin policies.
+- Version 0.1.2 was loaded into the user's actual Microsoft Edge profile. Settings, green action styling and the EdgeEver reader toolbar icon were visually verified on a live page.
+- Production dependency audit reports 0 vulnerabilities after upgrading DOMPurify to 3.4.17. The installed dependency tree contains no flagged GPL, AGPL, SSPL or unknown-license packages.
 
 ## Not yet verified
 
-- Installation of this custom extension into the user’s actual Edge/Chrome profile.
 - Authentication, write behavior and image rendering against the user’s real EdgeEver instance and its deployed version.
 - Full live-page capture across websites, cookie-protected/CDN images, Firefox or Safari.
 - Optional AI provider calls and remote provider-catalog refresh.
@@ -39,4 +40,4 @@ Conservative behavior: append/prepend into a note with meaningful contentJson bu
 
 ## Publication preparation
 
-The local `main` branch is a clean, single-commit source snapshot for eventual publication; the local `work/edgeever-clipper` branch preserves development/review history. Publish only `main`, not all local branches: the development baseline included upstream marketing/native-wrapper assets that are excluded from the released source snapshot. No Git remote has been configured and no push has occurred.
+The public repository is https://github.com/akispho/edgeever-web-clipper. Publish only `main`, not all local branches: the local development baseline included upstream marketing/native-wrapper assets that are excluded from the released source snapshot. Release artifacts and checksums are distributed through GitHub Releases.

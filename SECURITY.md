@@ -1,6 +1,8 @@
 # Security
 
-This is a development preview. No public security reporting address has been configured yet; configure GitHub private vulnerability reporting and a security contact before public release.
+Report vulnerabilities privately through
+[GitHub private vulnerability reporting](https://github.com/akispho/edgeever-web-clipper/security/advisories/new).
+Do not disclose suspected vulnerabilities, private captures or browser data in a public issue.
 
 Do not post API Tokens, private captures or browser storage in public issues. Revoke a leaked Token in EdgeEver immediately.
 
