@@ -13,7 +13,13 @@ for(const file of readdirSync('dist').filter(f=>f.endsWith('.js'))) {
  assert.ok(!source.includes('obsidian://'),`Obsidian URI in ${file}`);
  if(file!=='background.js') assert.ok(!source.includes('edgeever-private'),`Credential database shipped to ${file}`);
 }
+const readerSource=readFileSync('dist/reader-page.js','utf8');
+assert.ok(!readerSource.includes('M94.82'),'Obsidian logo path shipped to reader');
+assert.ok(readerSource.includes('M16 8h32v8H24v12h20v8H24v12h24v8H16z'),'EdgeEver logo missing from reader');
+const styles=readFileSync('dist/style.css','utf8').toLowerCase();
+for(const purple of ['#895df4','#a68af9','#8a5cf5']) assert.ok(!styles.includes(purple),`Obsidian accent ${purple} shipped`);
+assert.ok(styles.includes('#237a73'),'EdgeEver accent missing from styles');
 for(const page of ['popup.html','side-panel.html']) assert.ok(readFileSync(join('dist',page),'utf8').includes('destination-status'));
-console.log('EdgeEver build checks passed: MV3 identity, entry files, destination isolation, status UI.');
+console.log('EdgeEver build checks passed: MV3 identity, entry files, destination isolation, brand UI, status UI.');
 
 await import('./check-extension-runtime.mjs');
