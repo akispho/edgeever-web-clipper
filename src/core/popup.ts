@@ -288,6 +288,7 @@ function setupMessageListeners() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+	try {
 	loadedSettings = await loadSettings();
 	if (isIframe) {
 		document.documentElement.classList.add('is-embedded');
@@ -295,7 +296,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 	const isSidePanel = document.documentElement.classList.contains('is-side-panel');
 
-	try {
 		// Get the active tab via background script to handle Firefox compatibility
 		const response = await browser.runtime.sendMessage({ action: "getActiveTab" }) as { tabId?: number; error?: string };
 		if (!response || response.error || !response.tabId) {

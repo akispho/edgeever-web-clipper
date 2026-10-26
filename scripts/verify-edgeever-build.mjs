@@ -15,3 +15,5 @@ for(const file of readdirSync('dist').filter(f=>f.endsWith('.js'))) {
 }
 for(const page of ['popup.html','side-panel.html']) assert.ok(readFileSync(join('dist',page),'utf8').includes('destination-status'));
 console.log('EdgeEver build checks passed: MV3 identity, entry files, destination isolation, status UI.');
+
+await import('./check-extension-runtime.mjs');

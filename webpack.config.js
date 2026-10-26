@@ -97,6 +97,8 @@ module.exports = (env, argv) => {
 		resolve: {
 			extensions: ['.ts', '.js'],
 			alias: {
+				// The MV3 worker has no document; use the dependency's pure decoder in every bundle.
+				'decode-named-character-reference$': require.resolve('decode-named-character-reference'),
 				'./utils/browser-polyfill': path.resolve(__dirname, 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'),
 				'../utils/browser-polyfill': path.resolve(__dirname, 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js')
 			}
