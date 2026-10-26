@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist_firefox/
+dist_safari/
+dev/
+dev_firefox/
+dev_safari/
+.superpowers/
+builds/
+.DS_Store
+*.log
