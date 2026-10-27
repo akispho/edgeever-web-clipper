@@ -1098,5 +1098,11 @@
 	"createNotebook": { "message": "创建" },
 	"creatingNotebook": { "message": "正在创建笔记本…" },
 	"notebookReady": { "message": "已选中笔记本，可以保存剪藏。" },
-	"failedToCreateNotebook": { "message": "创建笔记本失败。" }
+	"failedToCreateNotebook": { "message": "创建笔记本失败。" },
+	"clipPropertySource": { "message": "来源" },
+	"clipPropertyAuthor": { "message": "作者" },
+	"clipPropertyPublished": { "message": "发布时间" },
+	"clipPropertyCreated": { "message": "剪藏时间" },
+	"clipPropertyDescription": { "message": "摘要" },
+	"clipPropertyTags": { "message": "标签" }
 }

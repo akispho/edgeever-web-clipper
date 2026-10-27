@@ -65,3 +65,11 @@ The public repository is https://github.com/akispho/edgeever-web-clipper. Publis
 - Reproduced in real local Microsoft Edge using production popup HTML/CSS and synthetic article content, at an effective 350×540 viewport: input width 18px, each button width 330px, Cancel extending to x=699px.
 - After correction: input width about 235px, Create and Cancel each 42px, all controls ending inside the 350px viewport. This is a browser layout check of compiled UI assets, not a live EdgeEver API write.
 - Checked default/expanded forms, popup and side-panel layouts, and Chinese/English control labels; screenshots and bounds are retained locally in builds/layout-check/.
+
+## Version 0.1.6 title and property localization (2026-10-27)
+
+- The clipping UI renders one title editor. If a template defines a title property, the shared property collector populates it from the edited note title instead of the separate template property value. Daily note metadata uses the local calendar title.
+- Source/author/published/created/description/tags labels follow the UI language. Their input IDs and saved YAML keys remain unchanged; custom names remain literal.
+- Regression checks execute the shipped popup in English and side-panel in Simplified Chinese, using a persisted template with a deliberately conflicting title. They verify the duplicate field is absent, the edited title is written to the capture and front matter, all original keys remain, and custom properties survive. A daily-note capture also checks the local calendar title.
+- Real local Microsoft Edge at 350×540 renders a single title editor and the six translated Chinese labels. The English page also renders its expected labels. These previews use DOM captured from the running built bundle with synthetic data; they do not call a live EdgeEver instance. Screenshot: builds/layout-check/properties/chinese-properties.jpg.
+- 259 unit tests, TypeScript, Chromium production build and shipped UI runtime checks pass.

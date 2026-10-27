@@ -67,7 +67,7 @@ const memoizedGenerateFrontmatter = memoizeWithExpiration(
 );
 
 function getPropertiesFromDOM(): Property[] {
-	return Array.from(document.querySelectorAll('.metadata-property input')).map(input => {
+	const properties = Array.from(document.querySelectorAll('.metadata-property input')).map(input => {
 		const inputElement = input as HTMLInputElement;
 		return {
 			id: inputElement.dataset.id || Date.now().toString() + Math.random().toString(36).slice(2, 11),
@@ -75,6 +75,13 @@ function getPropertiesFromDOM(): Property[] {
 			value: inputElement.type === 'checkbox' ? inputElement.checked : inputElement.value
 		};
 	}) as Property[];
+	const titleProperty=currentTemplate?.properties.find(property=>property.name==='title');
+	if(titleProperty) {
+		const isDailyNote=currentTemplate!.behavior.endsWith('-daily');
+		const title=(document.getElementById('note-name-field') as HTMLTextAreaElement).value;
+		properties.unshift({...titleProperty,value:isDailyNote ? dayjs().format('YYYY-MM-DD') : title.trim()});
+	}
+	return properties;
 }
 
 // Helper function to get tab info from background script
@@ -799,9 +806,15 @@ function buildTemplateFieldsSkeleton(template: Template | null) {
 	const existingTemplateProperties = document.querySelector('.metadata-properties') as HTMLElement;
 
 	const newTemplateProperties = createElementWithClass('div', 'metadata-properties');
+	const standardLabels = new Map([
+		['source','clipPropertySource'],['author','clipPropertyAuthor'],
+		['published','clipPropertyPublished'],['created','clipPropertyCreated'],
+		['description','clipPropertyDescription'],['tags','clipPropertyTags']
+	]);
 
 	if (Array.isArray(template.properties)) {
 		for (const property of template.properties) {
+			if(property.name==='title') continue;
 			const propertyDiv = createElementWithClass('div', 'metadata-property');
 			const propertyType = generalSettings.propertyTypes.find(p => p.name === property.name)?.type || 'text';
 
@@ -817,7 +830,8 @@ function buildTemplateFieldsSkeleton(template: Template | null) {
 
 			const propertyLabel = document.createElement('label');
 			propertyLabel.setAttribute('for', property.name);
-			propertyLabel.textContent = property.name;
+			const labelKey=standardLabels.get(property.name);
+			propertyLabel.textContent = labelKey ? getMessage(labelKey) : property.name;
 
 			metadataPropertyKey.appendChild(propertyIconSpan);
 			metadataPropertyKey.appendChild(propertyLabel);

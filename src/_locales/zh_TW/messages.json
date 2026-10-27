@@ -1103,5 +1103,11 @@
 	"createNotebook": { "message": "建立" },
 	"creatingNotebook": { "message": "正在建立筆記本…" },
 	"notebookReady": { "message": "已選取筆記本，可以儲存剪藏。" },
-	"failedToCreateNotebook": { "message": "建立筆記本失敗。" }
+	"failedToCreateNotebook": { "message": "建立筆記本失敗。" },
+	"clipPropertySource": { "message": "來源" },
+	"clipPropertyAuthor": { "message": "作者" },
+	"clipPropertyPublished": { "message": "發布時間" },
+	"clipPropertyCreated": { "message": "剪藏時間" },
+	"clipPropertyDescription": { "message": "摘要" },
+	"clipPropertyTags": { "message": "標籤" }
 }

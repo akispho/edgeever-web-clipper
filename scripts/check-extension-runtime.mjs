@@ -40,13 +40,17 @@ console.log('Worker runtime PASS: shipped background bundle boots without a DOM.
 
 // Exercise the shipped popup bundle and real template/UI code against synthetic
 // WebExtension boundaries; this is not a real-profile or live-instance test.
-for(const popupPage of ['popup.html','side-panel.html']) {
+for(const {popupPage,behavior} of [{popupPage:'popup.html',behavior:'create'},{popupPage:'side-panel.html',behavior:'create'},{popupPage:'popup.html',behavior:'append-daily'}]) {
+const locale=popupPage==='popup.html' ? 'en' : 'zh_CN';
+const translations=JSON.parse(readFileSync('src/_locales/'+locale+'/messages.json','utf8'));
+const message=key=>translations[key].message;
 const popup=new JSDOM(readFileSync('dist/'+popupPage,'utf8'),{url:'https://fixture.test/popup.html',runScripts:'outside-only',pretendToBeVisual:true});
 try {
  await new Promise(resolve=>popup.window.addEventListener('DOMContentLoaded',resolve,{once:true}));
  popup.window.browser=makeBrowser();popup.window.chrome=popup.window.browser;
- const legacyTemplate={id:'legacy',name:'Default',vault:'other',behavior:'create',noteNameFormat:'{{title}}',path:'Clippings',noteContentFormat:'{{content}}',context:'',properties:[{id:'tags',name:'tags',value:'clippings'}],triggers:[]};
+ const legacyTemplate={id:'legacy',name:'Default',vault:'other',behavior,noteNameFormat:'{{title}}',path:'Clippings',noteContentFormat:'{{content}}',context:'',properties:[{id:'title',name:'title',value:'Outdated duplicate title'},{id:'source',name:'source',value:'{{url}}'},{id:'author',name:'author',value:'{{author}}'},{id:'published',name:'published',value:'{{published}}'},{id:'created',name:'created',value:'{{date}}'},{id:'description',name:'description',value:'{{description}}'},{id:'tags',name:'tags',value:'clippings'},{id:'custom',name:'my_field',value:'Keep custom data'}],triggers:[]};
  await popup.window.browser.storage.sync.set({template_list:['legacy'],template_legacy:[LZString.compressToUTF16(JSON.stringify(legacyTemplate))]});
+ await popup.window.browser.storage.local.set({language:locale});
  const messages=[]; const creations=[]; let finishSave,finishCreate;
  const originalSend=popup.window.browser.runtime.sendMessage;
  popup.window.browser.runtime.sendMessage=async request=>{
@@ -77,20 +81,33 @@ try {
  assert.equal(path.disabled,true);
  assert.equal(form.hidden,true);
  assert.equal(select.options[select.options.length-1].value,'');
- assert.ok(select.options[select.options.length-1].textContent.includes('New sub-notebook'));
+ assert.ok(select.options[select.options.length-1].textContent.includes(message('createSubnotebook')));
  assert.equal(doc.querySelector('#create-subnotebook'),null);
  assert.ok(doc.querySelector('.clipper-footer').contains(status),'Save status must be next to the action');
  assert.equal(status.nextElementSibling.id,'action-buttons');
+ assert.equal(doc.querySelector('.metadata-property input#title'),null,'Title must have only one editable field');
+ const expectedLabels=locale==='en' ? ['Source','Author','Published','Clipped on','Description','Tags','my_field'] : ['来源','作者','发布时间','剪藏时间','摘要','标签','my_field'];
+ assert.deepEqual(Array.from(doc.querySelectorAll('.metadata-property-key label'),e=>e.textContent),expectedLabels);
+ const title=doc.querySelector('#note-name-field');
+ title.value='用户修改后的标题';title.dispatchEvent(new popup.window.Event('input'));
  doc.querySelector('.metadata-property input#tags').value='clippings,travel';
  const waitFor=async predicate=>{const deadline=Date.now()+3000;while(!predicate() && Date.now()<deadline) await new Promise(resolve=>setTimeout(resolve,10));assert.ok(predicate(),'Timed out waiting for save UI');};
  button.click();
  await waitFor(()=>messages.length===1);
  assert.equal(button.disabled,true);
- assert.ok(button.textContent.includes('Saving'));
+ assert.equal(button.textContent,message('savingToEdgeEver'));
  assert.equal(status.dataset.state,'saving');
  assert.equal(messages[0].notebookId,'other');
  assert.equal(messages[0].path,'');
  assert.deepEqual(Array.from(messages[0].tags),['clippings','travel']);
+ const today=new Date();
+ const expectedTitle=behavior.endsWith('-daily') ? `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}` : '用户修改后的标题';
+ assert.equal(messages[0].noteName,behavior.endsWith('-daily') ? '' : expectedTitle);
+ assert.ok(messages[0].content.includes('title: '+JSON.stringify(expectedTitle)));
+ assert.ok(!messages[0].content.includes('Outdated duplicate title'));
+ for(const key of ['title','source','author','published','created','description','tags','my_field']) assert.ok(messages[0].content.includes(key+':'),'Saved key must remain '+key);
+ for(const label of ['来源','作者','发布时间','剪藏时间','摘要','标签']) assert.ok(!messages[0].content.includes(label+':'),'UI translation must not rename saved keys');
+
  finishSave({ok:true,result:{memoId:'m',images:0,totalImages:0}});
  await waitFor(()=>status.dataset.state==='success');
  assert.equal(button.disabled,false);
@@ -138,7 +155,7 @@ try {
  assert.equal(select.value,'child','Repeated openings retain the current parent');
  path.dispatchEvent(new popup.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
  assert.equal(form.hidden,true);assert.equal(select.value,'child');
- console.log('Popup runtime PASS: compact notebook menu, cancel, validation, creation failure/retry, automatic child selection, native tags and adjacent save status.');
+ console.log('Popup runtime PASS: single authoritative title, localized property labels with original keys, custom properties, compact notebook creation and save feedback.');
 } finally {popup.window.close();}
 }
 

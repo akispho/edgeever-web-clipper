@@ -1098,5 +1098,11 @@
 	"createNotebook": { "message": "Create" },
 	"creatingNotebook": { "message": "Creating notebook…" },
 	"notebookReady": { "message": "Notebook selected. Ready to save." },
-	"failedToCreateNotebook": { "message": "Could not create the notebook." }
+	"failedToCreateNotebook": { "message": "Could not create the notebook." },
+	"clipPropertySource": { "message": "Source" },
+	"clipPropertyAuthor": { "message": "Author" },
+	"clipPropertyPublished": { "message": "Published" },
+	"clipPropertyCreated": { "message": "Clipped on" },
+	"clipPropertyDescription": { "message": "Description" },
+	"clipPropertyTags": { "message": "Tags" }
 }

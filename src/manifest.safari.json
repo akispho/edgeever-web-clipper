@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "EdgeEver Web Clipper",
   "homepage_url": "https://edgeever.org/",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Community clipper for EdgeEver with templates, highlights and article extraction.",
   "permissions": [
     "activeTab",
