@@ -35,6 +35,7 @@ interface ReaderModeResponse {
 let loadedSettings: Settings;
 let destination: PublicConnection = {instanceUrl:"",notebookId:"",notebooks:[],hasToken:false};
 let destinationSaving=false;
+let notebookCreating=false;
 let currentTemplate: Template | null = null;
 let templates: Template[] = [];
 let currentVariables: { [key: string]: string } = {};
@@ -414,13 +415,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function setupEventListeners(tabId: number) {
-	const createSubnotebook = document.getElementById('create-subnotebook') as HTMLInputElement;
-	const subnotebookName = document.getElementById('path-name-field') as HTMLInputElement;
-	createSubnotebook.addEventListener('change', () => {
-		subnotebookName.disabled = !createSubnotebook.checked;
-		subnotebookName.style.display = createSubnotebook.checked ? 'block' : 'none';
-		if (createSubnotebook.checked) subnotebookName.focus();
-		else subnotebookName.value = '';
+	document.getElementById('notebook-create-confirm')!.addEventListener('click', () => { void createSubnotebook(); });
+	document.getElementById('notebook-create-cancel')!.addEventListener('click', () => { setNotebookCreationVisible(false); });
+	document.getElementById('path-name-field')!.addEventListener('keydown', event => {
+		if(event.isComposing) return;
+		if (event.key === 'Enter') { event.preventDefault(); void createSubnotebook(); }
+		if (event.key === 'Escape') { event.preventDefault(); if (!notebookCreating) setNotebookCreationVisible(false); }
 	});
 	const templateDropdown = document.getElementById('template-select') as HTMLSelectElement;
 	if (templateDropdown) {
@@ -793,6 +793,7 @@ function buildTemplateFieldsSkeleton(template: Template | null) {
 		} else if (lastSelectedVault) {
 			vaultDropdown.value = lastSelectedVault;
 		}
+		if(vaultDropdown.value) vaultDropdown.dataset.notebookId=vaultDropdown.value;
 	}
 
 	const existingTemplateProperties = document.querySelector('.metadata-properties') as HTMLElement;
@@ -853,18 +854,7 @@ function buildTemplateFieldsSkeleton(template: Template | null) {
 		noteNameField.setAttribute('data-template-value', template.noteNameFormat);
 	}
 
-	const pathField = document.getElementById('path-name-field') as HTMLInputElement;
-	const pathContainer = document.querySelector('.vault-path-container') as HTMLElement;
-	if (pathField && pathContainer) {
-		const isDailyNote = template.behavior === 'append-daily' || template.behavior === 'prepend-daily';
-		pathContainer.style.display = 'flex';
-		document.getElementById('notebook-create-container')!.style.display = isDailyNote ? 'none' : '';
-		(document.getElementById('create-subnotebook') as HTMLInputElement).checked = false;
-		pathField.value = '';
-		pathField.disabled = true;
-		pathField.style.display = 'none';
-		pathField.removeAttribute('data-template-value');
-	}
+	setNotebookCreationVisible(false);
 
 	const noteContentField = document.getElementById('note-content-field') as HTMLTextAreaElement;
 	if (noteContentField) {
@@ -1056,6 +1046,53 @@ async function getReplacedTemplate(template: Template, variables: { [key: string
 	return replacedTemplate;
 }
 
+function setNotebookCreationVisible(visible:boolean) {
+	const form=document.getElementById('notebook-create-form')!;
+	const name=document.getElementById('path-name-field') as HTMLInputElement;
+	form.setAttribute('aria-label',getMessage('createSubnotebook'));
+	name.setAttribute('aria-label',getMessage('subnotebookName'));
+	name.placeholder=getMessage('subnotebookName');
+	if(!visible && form.contains(document.activeElement)) document.getElementById('vault-select')!.focus();
+	form.hidden=!visible;
+	name.disabled=!visible || notebookCreating;
+	if(!visible) name.value='';
+	(document.getElementById('clip-btn') as HTMLButtonElement).disabled=visible || notebookCreating || destinationSaving;
+	document.getElementById('destination-status')!.style.display='none';
+	if(visible) name.focus();
+}
+
+async function createSubnotebook():Promise<void> {
+	if(notebookCreating || destinationSaving || document.getElementById('notebook-create-form')!.hidden) return;
+	const select=document.getElementById('vault-select') as HTMLSelectElement;
+	const name=document.getElementById('path-name-field') as HTMLInputElement;
+	const confirm=document.getElementById('notebook-create-confirm') as HTMLButtonElement;
+	const cancel=document.getElementById('notebook-create-cancel') as HTMLButtonElement;
+	const status=document.getElementById('destination-status')!;
+	if(!name.value.trim()) {
+		status.textContent=getMessage('subnotebookNameRequired');status.dataset.state='error';status.style.display='block';name.focus();return;
+	}
+	notebookCreating=true;
+	select.disabled=name.disabled=confirm.disabled=cancel.disabled=true;
+	status.textContent=getMessage('creatingNotebook');status.dataset.state='saving';status.style.display='block';
+	try {
+		const result=await destinationMessage('edgeever-create-notebook',{parentId:select.value,name:name.value.trim()});
+		destination.notebooks=result.notebooks;
+		lastSelectedVault=result.notebookId;
+		updateVaultDropdown(destination.notebooks.map(n=>n.id));
+		setNotebookCreationVisible(false);
+		status.textContent=getMessage('notebookReady');status.dataset.state='success';status.style.display='block';
+		await setLocalStorage('lastSelectedVault',lastSelectedVault);
+	} catch(error) {
+		status.textContent=error instanceof Error ? error.message : getMessage('failedToCreateNotebook');status.dataset.state='error';status.style.display='block';
+	} finally {
+		notebookCreating=false;
+		select.disabled=confirm.disabled=cancel.disabled=false;
+		name.disabled=document.getElementById('notebook-create-form')!.hidden;
+		if(name.disabled) select.focus();else name.focus();
+		(document.getElementById('clip-btn') as HTMLButtonElement).disabled=destinationSaving || !document.getElementById('notebook-create-form')!.hidden;
+	}
+}
+
 function updateVaultDropdown(vaults: string[]) {
 	const vaultDropdown = document.getElementById('vault-select') as HTMLSelectElement | null;
 	const vaultContainer = document.getElementById('vault-container');
@@ -1071,6 +1108,11 @@ function updateVaultDropdown(vaults: string[]) {
 		option.textContent = notebookLabel(destination.notebooks,vault) || vault;
 		vaultDropdown.appendChild(option);
 	});
+	if(vaults.length>0) {
+		const create=document.createElement('option');
+		create.value='';create.textContent='+ '+getMessage('createSubnotebook');
+		vaultDropdown.appendChild(create);
+	}
 
 	// Only show vault selector if vaults are defined
 	if (vaults.length > 0) {
@@ -1085,10 +1127,19 @@ function updateVaultDropdown(vaults: string[]) {
 	}
 
 	// Add event listener to update lastSelectedVault when changed
-	vaultDropdown.addEventListener('change', () => {
+	vaultDropdown.dataset.notebookId=vaultDropdown.value;
+	vaultDropdown.onchange = () => {
+		if(destinationSaving || notebookCreating) {vaultDropdown.value=vaultDropdown.dataset.notebookId || '';return;}
+		if(!vaultDropdown.value) {
+			vaultDropdown.value=vaultDropdown.dataset.notebookId || '';
+			setNotebookCreationVisible(true);
+			return;
+		}
+		vaultDropdown.dataset.notebookId=vaultDropdown.value;
+		setNotebookCreationVisible(false);
 		lastSelectedVault = vaultDropdown.value;
 		setLocalStorage('lastSelectedVault', lastSelectedVault);
-	});
+	};
 }
 
 function refreshPopup() {
@@ -1321,7 +1372,7 @@ function determineMainAction() {
 }
 
 async function handleClipEdgeEver(): Promise<void> {
-	if (!currentTemplate || destinationSaving) return;
+	if (!currentTemplate || destinationSaving || notebookCreating || !document.getElementById('notebook-create-form')!.hidden) return;
 	const savingTemplate=structuredClone(currentTemplate);
 	const capturedSourceUrl=currentVariables['{{url}}'];
 	destinationSaving=true;
@@ -1334,7 +1385,6 @@ async function handleClipEdgeEver(): Promise<void> {
 	const vaultDropdown = document.getElementById('vault-select') as HTMLSelectElement;
 	const noteContentField = document.getElementById('note-content-field') as HTMLTextAreaElement;
 	const noteNameField = document.getElementById('note-name-field') as HTMLInputElement;
-	const pathField = document.getElementById('path-name-field') as HTMLInputElement;
 	const interpretBtn = document.getElementById('interpret-btn') as HTMLButtonElement;
 
 	if (!vaultDropdown || !noteContentField) {
@@ -1366,9 +1416,7 @@ async function handleClipEdgeEver(): Promise<void> {
 		const selectedVault = vaultDropdown.value || savingTemplate.vault || '';
 		const isDailyNote = savingTemplate.behavior === 'append-daily' || savingTemplate.behavior === 'prepend-daily';
 		const noteName = isDailyNote ? '' : noteNameField?.value || '';
-		const createSubnotebook = (document.getElementById('create-subnotebook') as HTMLInputElement).checked;
-		const path = isDailyNote || !createSubnotebook ? '' : pathField.value.trim();
-		if (!isDailyNote && createSubnotebook && !path) throw new Error(getMessage('subnotebookNameRequired'));
+		const path = '';
 		const tags = parseClipTags(String(properties.find(property=>property.name.trim().toLowerCase()==='tags')?.value || ''));
 
 		const snapshot=captureClipOperation(savingTemplate,{content:fileContent,noteName,path,tags,notebookId:selectedVault,sourceUrl:capturedSourceUrl || ''});

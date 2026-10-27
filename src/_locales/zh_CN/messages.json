@@ -1094,5 +1094,9 @@
 	"subnotebookName": { "message": "子笔记本名称" },
 	"subnotebookNameRequired": { "message": "请填写新建子笔记本的名称。" },
 	"savingToEdgeEver": { "message": "正在保存到 EdgeEver…" },
-	"savedToEdgeEver": { "message": "已保存到 EdgeEver ✓" }
+	"savedToEdgeEver": { "message": "已保存到 EdgeEver ✓" },
+	"createNotebook": { "message": "创建" },
+	"creatingNotebook": { "message": "正在创建笔记本…" },
+	"notebookReady": { "message": "已选中笔记本，可以保存剪藏。" },
+	"failedToCreateNotebook": { "message": "创建笔记本失败。" }
 }

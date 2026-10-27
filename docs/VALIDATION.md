@@ -3,7 +3,7 @@
 ## Confirmed locally
 
 - Upstream baseline: 214 tests pass in the fixture’s expected America/Los_Angeles timezone; the original Shanghai-timezone run failed only the fixed-date YouTube template timestamp expectation.
-- Adapted project: 250 tests pass across 22 files. New coverage includes URL normalization and credential boundaries, all six save behaviors, ambiguous titles across pagination, stale notebook IDs, version conflicts, partial image transfer, image authentication isolation, CommonMark image references/code examples, and destination settings UI recovery.
+- Adapted project: 259 tests pass across 22 files. New coverage includes URL normalization and credential boundaries, all six save behaviors, ambiguous titles across pagination, stale notebook IDs, version conflicts, partial image transfer, image authentication isolation, CommonMark image references/code examples, and destination settings UI recovery.
 - `npm run typecheck`: pass.
 - `npm run build:chrome`: pass. Three inherited webpack bundle-size/performance warnings remain; they are not suppressed.
 - `npm run verify:build`: pass. Checks MV3 identity, required entry files, the root MIT license, absence of Obsidian URI saving in browser bundles, credential database isolation to the background bundle, and status UI.
@@ -50,3 +50,11 @@ The public repository is https://github.com/akispho/edgeever-web-clipper. Publis
 - General settings no longer contain the empty activity block or the Help row. The version link points to this project on GitHub.
 - TypeScript, 250 tests, Chromium production build, worker boot and shipped UI runtime checks passed. Production webpack still reports its three inherited bundle-size warnings.
 - The new version has not been verified against the user's live EdgeEver instance or installed browser profile. Synthetic runtime checks do not replace that acceptance check.
+
+## Version 0.1.4 compact notebook creation (2026-10-27)
+
+- The notebook selector is the only destination row shown by default. Its last option opens a hidden inline Create/Cancel form.
+- Cancel, Escape and choosing an existing notebook discard the draft name without an API request. The selected parent is restored when the menu action opens, including template-specific notebook defaults.
+- Explicit creation validates names and parent IDs in the background, reuses an existing same-name child, refreshes the local notebook list and selects the child. Creation alone never saves a note.
+- Failure preserves the entered name and parent for retry; saving a note is disabled until creation is completed or cancelled. Refreshed notebook caching does not overwrite a connection changed during the network request.
+- 259 tests, TypeScript, Chromium production build and both shipped popup and side-panel runtime checks passed. Live deployment acceptance remains unverified.

@@ -52,8 +52,11 @@
 					<div id="vault-container" style="display: none;">
 						<select id="vault-select"></select>
 					</div>
-					<label id="notebook-create-container"><input id="create-subnotebook" type="checkbox"><span data-i18n="createSubnotebook">New sub-notebook</span></label>
-					<input id="path-name-field" type="text" data-i18n-placeholder="subnotebookName" aria-label="Sub-notebook name" style="display:none" disabled/>
+					<div id="notebook-create-form" role="group" aria-label="New sub-notebook" hidden>
+						<input id="path-name-field" type="text" maxlength="80" aria-label="Sub-notebook name" disabled/>
+						<button id="notebook-create-confirm" type="button" data-i18n="createNotebook">Create</button>
+						<button id="notebook-create-cancel" type="button" data-i18n="cancel">Cancel</button>
+					</div>
 				</div>
 				<div id="interpreter" style="display: none;">
 					<textarea id="prompt-context" rows="3"></textarea>

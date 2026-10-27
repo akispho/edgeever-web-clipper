@@ -1094,5 +1094,9 @@
 	"subnotebookName": { "message": "Sub-notebook name" },
 	"subnotebookNameRequired": { "message": "Enter a name for the new sub-notebook." },
 	"savingToEdgeEver": { "message": "Saving to EdgeEver…" },
-	"savedToEdgeEver": { "message": "Saved to EdgeEver ✓" }
+	"savedToEdgeEver": { "message": "Saved to EdgeEver ✓" },
+	"createNotebook": { "message": "Create" },
+	"creatingNotebook": { "message": "Creating notebook…" },
+	"notebookReady": { "message": "Notebook selected. Ready to save." },
+	"failedToCreateNotebook": { "message": "Could not create the notebook." }
 }

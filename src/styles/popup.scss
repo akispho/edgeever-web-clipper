@@ -172,12 +172,13 @@
 		}
 		#path-name-field { flex: 1; min-width: 100px; }
 	}
-	#notebook-create-container {
+	#notebook-create-form:not([hidden]) {
 		display: flex;
 		align-items: center;
+		width: 100%;
 		gap: 0.35rem;
-		font-size: var(--font-ui-smaller);
-		color: var(--text-muted);
+		input { flex: 1; min-width: 0; }
+		button { flex-shrink: 0; padding-inline: 0.5rem; }
 	}
 	#destination-status {
 		margin: 0;

@@ -45,12 +45,13 @@ const popup=new JSDOM(readFileSync('dist/'+popupPage,'utf8'),{url:'https://fixtu
 try {
  await new Promise(resolve=>popup.window.addEventListener('DOMContentLoaded',resolve,{once:true}));
  popup.window.browser=makeBrowser();popup.window.chrome=popup.window.browser;
- const legacyTemplate={id:'legacy',name:'Default',behavior:'create',noteNameFormat:'{{title}}',path:'Clippings',noteContentFormat:'{{content}}',context:'',properties:[{id:'tags',name:'tags',value:'clippings'}],triggers:[]};
+ const legacyTemplate={id:'legacy',name:'Default',vault:'other',behavior:'create',noteNameFormat:'{{title}}',path:'Clippings',noteContentFormat:'{{content}}',context:'',properties:[{id:'tags',name:'tags',value:'clippings'}],triggers:[]};
  await popup.window.browser.storage.sync.set({template_list:['legacy'],template_legacy:[LZString.compressToUTF16(JSON.stringify(legacyTemplate))]});
- const messages=[]; let finishSave;
+ const messages=[]; const creations=[]; let finishSave,finishCreate;
  const originalSend=popup.window.browser.runtime.sendMessage;
  popup.window.browser.runtime.sendMessage=async request=>{
-  if(request.action==='edgeever-connection') return {ok:true,result:{instanceUrl:'https://notes.test',notebookId:'nb',notebooks:[{id:'nb',name:'Inbox',parentId:null}],hasToken:true}};
+  if(request.action==='edgeever-connection') return {ok:true,result:{instanceUrl:'https://notes.test',notebookId:'nb',notebooks:[{id:'nb',name:'Inbox',parentId:null},{id:'other',name:'Work',parentId:null}],hasToken:true}};
+  if(request.action==='edgeever-create-notebook') {creations.push(request);return new Promise(resolve=>{finishCreate=resolve;});}
   if(request.action==='edgeever-save') {messages.push(request.clip);return new Promise(resolve=>{finishSave=resolve;});}
   return originalSend(request);
  };
@@ -65,12 +66,19 @@ try {
  assert.ok(doc.querySelector('#note-content-field').value.includes('Captured article body.'),'Popup failed to render extracted content: '+doc.querySelector('.error-message').textContent);
  assert.notEqual(doc.querySelector('.clipper').style.display,'none');
  const path=doc.querySelector('#path-name-field');
- const create=doc.querySelector('#create-subnotebook');
+ const form=doc.querySelector('#notebook-create-form');
+ const select=doc.querySelector('#vault-select');
+ const create=doc.querySelector('#notebook-create-confirm');
+ const cancel=doc.querySelector('#notebook-create-cancel');
+ const openCreate=()=>{select.value='';select.dispatchEvent(new popup.window.Event('change'));};
  const button=doc.querySelector('#clip-btn');
  const status=doc.querySelector('#destination-status');
  assert.equal(path.value,'','Legacy Clippings path must not be applied automatically');
  assert.equal(path.disabled,true);
- assert.equal(create.checked,false);
+ assert.equal(form.hidden,true);
+ assert.equal(select.options[select.options.length-1].value,'');
+ assert.ok(select.options[select.options.length-1].textContent.includes('New sub-notebook'));
+ assert.equal(doc.querySelector('#create-subnotebook'),null);
  assert.ok(doc.querySelector('.clipper-footer').contains(status),'Save status must be next to the action');
  assert.equal(status.nextElementSibling.id,'action-buttons');
  doc.querySelector('.metadata-property input#tags').value='clippings,travel';
@@ -80,27 +88,57 @@ try {
  assert.equal(button.disabled,true);
  assert.ok(button.textContent.includes('Saving'));
  assert.equal(status.dataset.state,'saving');
- assert.equal(messages[0].notebookId,'nb');
+ assert.equal(messages[0].notebookId,'other');
  assert.equal(messages[0].path,'');
  assert.deepEqual(Array.from(messages[0].tags),['clippings','travel']);
  finishSave({ok:true,result:{memoId:'m',images:0,totalImages:0}});
  await waitFor(()=>status.dataset.state==='success');
  assert.equal(button.disabled,false);
- create.click();
+ openCreate();
+ assert.equal(form.hidden,false);
  assert.equal(path.disabled,false);
- button.click();
+ assert.equal(select.value,'other','New child uses the template-selected notebook, not the initial default');
+ assert.equal(button.disabled,true);
+ path.value='Cancel me';cancel.click();
+ assert.equal(form.hidden,true);
+ assert.equal(path.value,'');
+ assert.equal(button.disabled,false);
+ assert.equal(creations.length,0);
+ openCreate();
+ select.value='nb';select.dispatchEvent(new popup.window.Event('change'));
+ assert.equal(form.hidden,true,'Selecting an existing notebook closes child creation');
+ openCreate();create.click();
  await waitFor(()=>status.dataset.state==='error');
- assert.equal(messages.length,1,'Blank child names must not send a save');
+ assert.equal(creations.length,0,'Blank names must not create a notebook');
  path.value='Travel';
+ path.dispatchEvent(new popup.window.KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true}));
+ assert.equal(creations.length,0,'IME confirmation must not create a notebook');
+ path.dispatchEvent(new popup.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+ await waitFor(()=>creations.length===1);
+ assert.equal(select.disabled,true);assert.equal(cancel.disabled,true);assert.equal(button.disabled,true);
+ assert.equal(creations[0].parentId,'nb');assert.equal(creations[0].name,'Travel');
+ finishCreate({ok:false,error:'Synthetic permission failure'});
+ await waitFor(()=>!create.disabled);
+ assert.equal(status.dataset.state,'error');
+ assert.equal(form.hidden,false);assert.equal(path.value,'Travel');assert.equal(select.value,'nb');
+ create.click();
+ await waitFor(()=>creations.length===2);
+ finishCreate({ok:true,result:{notebookId:'child',notebooks:[{id:'nb',name:'Inbox',parentId:null},{id:'child',name:'Travel',parentId:'nb'}]}});
+ await waitFor(()=>form.hidden && !button.disabled);
+ assert.equal(doc.activeElement,select,'Creation returns keyboard focus to the notebook selector');
+ assert.equal(select.value,'child');assert.equal(path.value,'');
+ assert.equal(messages.length,1,'Creating a notebook must not save a note');
  button.click();
  await waitFor(()=>messages.length===2);
- assert.equal(messages[1].path,'Travel');
+ assert.equal(messages[1].notebookId,'child');assert.equal(messages[1].path,'');
  finishSave({ok:true,result:{memoId:'m2',images:0,totalImages:1,warning:'Image retained remotely'}});
  await waitFor(()=>status.dataset.state==='warning');
  assert.equal(status.textContent,'Image retained remotely');
- create.click();
- assert.equal(path.value,'');
- console.log('Popup runtime PASS: legacy path ignored, edited tags sent, explicit child creation, adjacent saving/success/warning/error status.');
+ openCreate();
+ assert.equal(select.value,'child','Repeated openings retain the current parent');
+ path.dispatchEvent(new popup.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ assert.equal(form.hidden,true);assert.equal(select.value,'child');
+ console.log('Popup runtime PASS: compact notebook menu, cancel, validation, creation failure/retry, automatic child selection, native tags and adjacent save status.');
 } finally {popup.window.close();}
 }
 

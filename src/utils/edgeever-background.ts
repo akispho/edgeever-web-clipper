@@ -1,7 +1,7 @@
 import browser from './browser-polyfill';
 import { EdgeEverClient, normalizeInstanceUrl } from './edgeever-client';
 import { connectionStore } from './edgeever-connection';
-import { saveClip, validateClip } from './edgeever-note-creator';
+import { resolveNotebook, saveClip, validateClip } from './edgeever-note-creator';
 
 export function trustedDestinationPage(url:string|undefined,base:string):boolean {
  return !!url && ['popup.html','side-panel.html','settings.html'].some(page=>url.split('?')[0]===base+page);
@@ -9,7 +9,7 @@ export function trustedDestinationPage(url:string|undefined,base:string):boolean
 let saving=false;
 export function registerEdgeEverDestination():void {
  browser.runtime.onMessage.addListener((request:any,sender:any,sendResponse:(value:any)=>void):true|undefined=>{
-  if(!request || !['edgeever-connection','edgeever-configure','edgeever-save'].includes(request.action)) return;
+  if(!request || !['edgeever-connection','edgeever-configure','edgeever-save','edgeever-create-notebook'].includes(request.action)) return;
   if(!trustedDestinationPage(sender.url,browser.runtime.getURL(''))) {sendResponse({ok:false,error:'EdgeEver destination is restricted to extension pages.'});return true;}
   (async()=>{
    const saved=await connectionStore();
@@ -25,6 +25,15 @@ export function registerEdgeEverDestination():void {
     return {instanceUrl,notebookId,notebooks,hasToken:true};
    }
    if(!saved) throw new Error('请先打开扩展设置，配置 EdgeEver 地址和 API Token。');
+   if(request.action==='edgeever-create-notebook') {
+    if(typeof request.parentId!=='string' || !request.parentId || typeof request.name!=='string' || !request.name.trim() || request.name.trim().length>80 || /[\\/\r\n]/.test(request.name) || ['.','..'].includes(request.name.trim())) throw new Error('请填写有效的子笔记本名称（1–80 字，不含斜杠）。');
+    const client=new EdgeEverClient(saved);
+    const notebookId=await resolveNotebook(client,request.parentId,request.name.trim());
+    const notebooks=await client.notebooks();
+    const current=await connectionStore();
+    if(current?.instanceUrl===saved.instanceUrl && current.token===saved.token) await connectionStore({...current,notebooks});
+    return {notebookId,notebooks};
+   }
    validateClip(request.clip);
    if(saving) throw new Error('已有剪藏正在保存，请等待完成。');
    saving=true;

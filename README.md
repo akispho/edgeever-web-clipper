@@ -28,7 +28,7 @@ npm run build:chrome
 npm run verify:build
 ```
 
-`dist/` is the unpacked Chromium extension. `builds/edgeever-web-clipper-0.1.3-chrome.zip` is the installable unpacked archive. Build output and credentials are not committed.
+`dist/` is the unpacked Chromium extension. `builds/edgeever-web-clipper-0.1.4-chrome.zip` is the installable unpacked archive. Build output and credentials are not committed.
 
 Firefox build metadata is retained for follow-up work, but Firefox installation and behavior are not verified. Safari app packaging is not included; this fork does not claim Safari support.
 
@@ -37,7 +37,7 @@ Firefox build metadata is retained for follow-up work, but Firefox installation 
 | Clipper concept | EdgeEver behavior |
 | --- | --- |
 | Vault | Notebook, bound by its ID |
-| Destination | Saves directly to the selected notebook. Enable “New sub-notebook” and enter a name only when you want to create a child notebook. Existing template paths are not applied automatically. |
+| Destination | Saves directly to the selected notebook. Choose “+ New sub-notebook” at the bottom of the notebook menu, enter a name and click Create only when you want to create a child notebook. Existing template paths are not applied automatically. |
 | Create | New editable Markdown memo, tagged `web-clip` |
 | Append / prepend | Find the unique exact title within the selected notebook; create it if absent |
 | Daily note | Local calendar date `YYYY-MM-DD` in the selected notebook |

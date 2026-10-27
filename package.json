@@ -1,6 +1,6 @@
 {
   "name": "edgeever-clipper",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Community web clipper for EdgeEver, based on Obsidian Web Clipper.",
   "scripts": {
     "defuddle-dev": "node scripts/set-defuddle-dev.js",

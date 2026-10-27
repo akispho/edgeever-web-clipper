@@ -1099,5 +1099,9 @@
 	"subnotebookName": { "message": "子筆記本名稱" },
 	"subnotebookNameRequired": { "message": "請填寫新增子筆記本的名稱。" },
 	"savingToEdgeEver": { "message": "正在儲存至 EdgeEver…" },
-	"savedToEdgeEver": { "message": "已儲存至 EdgeEver ✓" }
+	"savedToEdgeEver": { "message": "已儲存至 EdgeEver ✓" },
+	"createNotebook": { "message": "建立" },
+	"creatingNotebook": { "message": "正在建立筆記本…" },
+	"notebookReady": { "message": "已選取筆記本，可以儲存剪藏。" },
+	"failedToCreateNotebook": { "message": "建立筆記本失敗。" }
 }
