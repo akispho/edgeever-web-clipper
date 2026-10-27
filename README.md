@@ -28,7 +28,7 @@ npm run build:chrome
 npm run verify:build
 ```
 
-`dist/` is the unpacked Chromium extension. `builds/edgeever-web-clipper-0.1.4-chrome.zip` is the installable unpacked archive. Build output and credentials are not committed.
+`dist/` is the unpacked Chromium extension. `builds/edgeever-web-clipper-0.1.5-chrome.zip` is the installable unpacked archive. Build output and credentials are not committed.
 
 Firefox build metadata is retained for follow-up work, but Firefox installation and behavior are not verified. Safari app packaging is not included; this fork does not claim Safari support.
 

@@ -58,3 +58,10 @@ The public repository is https://github.com/akispho/edgeever-web-clipper. Publis
 - Explicit creation validates names and parent IDs in the background, reuses an existing same-name child, refreshes the local notebook list and selects the child. Creation alone never saves a note.
 - Failure preserves the entered name and parent for retry; saving a note is disabled until creation is completed or cancelled. Refreshed notebook caching does not overwrite a connection changed during the network request.
 - 259 tests, TypeScript, Chromium production build and both shipped popup and side-panel runtime checks passed. Live deployment acceptance remains unverified.
+
+## Version 0.1.5 notebook form layout (2026-10-27)
+
+- Root cause: shared buttons use width: 100%. The inline notebook creation buttons failed to override it, shrinking the input and overflowing the form. Buttons now use intrinsic widths with a non-growing flex basis. The obsolete input min-width rule is removed.
+- Reproduced in real local Microsoft Edge using production popup HTML/CSS and synthetic article content, at an effective 350×540 viewport: input width 18px, each button width 330px, Cancel extending to x=699px.
+- After correction: input width about 235px, Create and Cancel each 42px, all controls ending inside the 350px viewport. This is a browser layout check of compiled UI assets, not a live EdgeEver API write.
+- Checked default/expanded forms, popup and side-panel layouts, and Chinese/English control labels; screenshots and bounds are retained locally in builds/layout-check/.

@@ -170,7 +170,6 @@
 			min-width: 100px;
 			cursor: default;
 		}
-		#path-name-field { flex: 1; min-width: 100px; }
 	}
 	#notebook-create-form:not([hidden]) {
 		display: flex;
@@ -178,7 +177,7 @@
 		width: 100%;
 		gap: 0.35rem;
 		input { flex: 1; min-width: 0; }
-		button { flex-shrink: 0; padding-inline: 0.5rem; }
+		button { flex: 0 0 auto; width: auto; padding-inline: 0.5rem; }
 	}
 	#destination-status {
 		margin: 0;
