@@ -1,4 +1,4 @@
-import { notebookLabel } from '../utils/edgeever-note-creator';
+import { notebookLabel, parseClipTags } from '../utils/edgeever-note-creator';
 import { captureClipOperation } from '../utils/clip-snapshot';
 import dayjs from 'dayjs';
 import { Template, Property, PromptVariable } from '../types/types';
@@ -414,6 +414,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function setupEventListeners(tabId: number) {
+	const createSubnotebook = document.getElementById('create-subnotebook') as HTMLInputElement;
+	const subnotebookName = document.getElementById('path-name-field') as HTMLInputElement;
+	createSubnotebook.addEventListener('change', () => {
+		subnotebookName.disabled = !createSubnotebook.checked;
+		subnotebookName.style.display = createSubnotebook.checked ? 'block' : 'none';
+		if (createSubnotebook.checked) subnotebookName.focus();
+		else subnotebookName.value = '';
+	});
 	const templateDropdown = document.getElementById('template-select') as HTMLSelectElement;
 	if (templateDropdown) {
 		templateDropdown.addEventListener('change', function(this: HTMLSelectElement) {
@@ -849,12 +857,13 @@ function buildTemplateFieldsSkeleton(template: Template | null) {
 	const pathContainer = document.querySelector('.vault-path-container') as HTMLElement;
 	if (pathField && pathContainer) {
 		const isDailyNote = template.behavior === 'append-daily' || template.behavior === 'prepend-daily';
-		if (isDailyNote) {
-			pathField.style.display = 'none';
-		} else {
-			pathContainer.style.display = 'flex';
-			pathField.setAttribute('data-template-value', template.path);
-		}
+		pathContainer.style.display = 'flex';
+		document.getElementById('notebook-create-container')!.style.display = isDailyNote ? 'none' : '';
+		(document.getElementById('create-subnotebook') as HTMLInputElement).checked = false;
+		pathField.value = '';
+		pathField.disabled = true;
+		pathField.style.display = 'none';
+		pathField.removeAttribute('data-template-value');
 	}
 
 	const noteContentField = document.getElementById('note-content-field') as HTMLTextAreaElement;
@@ -897,12 +906,11 @@ async function fillTemplateFieldValues(currentTabId: number, template: Template 
 	if (!Array.isArray(template.properties)) return;
 
 	// Compile all templates in parallel
-	const [compiledPropertyValues, formattedNoteName, formattedPath, formattedContent] = await Promise.all([
+	const [compiledPropertyValues, formattedNoteName, formattedContent] = await Promise.all([
 		Promise.all(template.properties.map(property =>
 			memoizedCompileTemplate(currentTabId!, unescapeValue(property.value), variables, currentUrl)
 		)),
 		memoizedCompileTemplate(currentTabId!, template.noteNameFormat, variables, currentUrl),
-		memoizedCompileTemplate(currentTabId!, template.path, variables, currentUrl),
 		template.noteContentFormat
 			? memoizedCompileTemplate(currentTabId!, template.noteContentFormat, variables, currentUrl)
 			: Promise.resolve('')
@@ -931,11 +939,6 @@ async function fillTemplateFieldValues(currentTabId: number, template: Template 
 	if (noteNameField) {
 		noteNameField.value = formattedNoteName.trim();
 		adjustNoteNameHeight(noteNameField);
-	}
-
-	const pathField = document.getElementById('path-name-field') as HTMLInputElement;
-	if (pathField) {
-		pathField.value = formattedPath;
 	}
 
 	const noteContentField = document.getElementById('note-content-field') as HTMLTextAreaElement;
@@ -1323,9 +1326,10 @@ async function handleClipEdgeEver(): Promise<void> {
 	const capturedSourceUrl=currentVariables['{{url}}'];
 	destinationSaving=true;
 	const saveButton=document.getElementById("clip-btn") as HTMLButtonElement;
-	if(saveButton) saveButton.disabled=true;
+	const saveLabel=saveButton?.textContent || '';
+	if(saveButton) {saveButton.disabled=true;saveButton.textContent=getMessage('savingToEdgeEver');}
 	const status=document.getElementById('destination-status');
-	if(status) { status.textContent='正在保存到 EdgeEver… / Saving…'; status.style.display='block'; }
+	if(status) { status.textContent=getMessage('savingToEdgeEver'); status.dataset.state='saving'; status.style.display='block'; }
 
 	const vaultDropdown = document.getElementById('vault-select') as HTMLSelectElement;
 	const noteContentField = document.getElementById('note-content-field') as HTMLTextAreaElement;
@@ -1335,7 +1339,7 @@ async function handleClipEdgeEver(): Promise<void> {
 
 	if (!vaultDropdown || !noteContentField) {
 		showError('Some required fields are missing. Please try reloading the extension.');
-		destinationSaving=false; if(saveButton) saveButton.disabled=false;
+		destinationSaving=false; if(saveButton) {saveButton.disabled=false;saveButton.textContent=saveLabel;}
 		return;
 	}
 
@@ -1362,9 +1366,12 @@ async function handleClipEdgeEver(): Promise<void> {
 		const selectedVault = vaultDropdown.value || savingTemplate.vault || '';
 		const isDailyNote = savingTemplate.behavior === 'append-daily' || savingTemplate.behavior === 'prepend-daily';
 		const noteName = isDailyNote ? '' : noteNameField?.value || '';
-		const path = isDailyNote ? '' : pathField?.value || '';
+		const createSubnotebook = (document.getElementById('create-subnotebook') as HTMLInputElement).checked;
+		const path = isDailyNote || !createSubnotebook ? '' : pathField.value.trim();
+		if (!isDailyNote && createSubnotebook && !path) throw new Error(getMessage('subnotebookNameRequired'));
+		const tags = parseClipTags(String(properties.find(property=>property.name.trim().toLowerCase()==='tags')?.value || ''));
 
-		const snapshot=captureClipOperation(savingTemplate,{content:fileContent,noteName,path,notebookId:selectedVault,sourceUrl:capturedSourceUrl || ''});
+		const snapshot=captureClipOperation(savingTemplate,{content:fileContent,noteName,path,tags,notebookId:selectedVault,sourceUrl:capturedSourceUrl || ''});
 		const sourceUrl=snapshot.sourceUrl || (await getCurrentTabInfo()).url || '';
 		const result=await destinationMessage('edgeever-save',{clip:{...snapshot,sourceUrl}});
 		const tabInfo = await getCurrentTabInfo();
@@ -1373,12 +1380,12 @@ async function handleClipEdgeEver(): Promise<void> {
 		lastSelectedVault = selectedVault;
 		await setLocalStorage('lastSelectedVault', lastSelectedVault);
 
-		if(status) status.textContent=result.warning || '已保存到 EdgeEver ✓';
+		if(status) {status.textContent=result.warning || getMessage('savedToEdgeEver');status.dataset.state=result.warning ? 'warning' : 'success';}
 	} catch (error) {
 		console.error('Error in handleClipEdgeEver:', error);
-		if(status) status.textContent=error instanceof Error ? error.message : 'EdgeEver 保存失败';
+		if(status) {status.textContent=error instanceof Error ? error.message : 'EdgeEver 保存失败';status.dataset.state='error';}
 		throw error;
-	} finally {destinationSaving=false; if(saveButton) saveButton.disabled=false;}
+	} finally {destinationSaving=false; if(saveButton) {saveButton.disabled=false;saveButton.textContent=saveLabel;}}
 }
 
 function addSecondaryAction(container: Element, actionType: string, handler: () => void) {

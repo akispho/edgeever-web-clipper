@@ -36,7 +36,6 @@
 				</a>		
 			</div>
 		</div>
-		<p id="destination-status" role="status" aria-live="polite" style="display:none;padding:8px 12px;white-space:pre-wrap"></p>
 		<p class="error-message" style="display: none;"></p>
 		<div class="clipper">
 			<textarea id="note-name-field" type="text" data-i18n="noteName" rows="1"></textarea>
@@ -53,7 +52,8 @@
 					<div id="vault-container" style="display: none;">
 						<select id="vault-select"></select>
 					</div>
-					<input id="path-name-field" type="text" data-i18n="folder"/>
+					<label id="notebook-create-container"><input id="create-subnotebook" type="checkbox"><span data-i18n="createSubnotebook">New sub-notebook</span></label>
+					<input id="path-name-field" type="text" data-i18n-placeholder="subnotebookName" aria-label="Sub-notebook name" style="display:none" disabled/>
 				</div>
 				<div id="interpreter" style="display: none;">
 					<textarea id="prompt-context" rows="3"></textarea>
@@ -65,6 +65,7 @@
 					<div id="token-counter" class="token-counter"></div>
 					<div id="interpreter-error" style="display: none;"></div>
 				</div>
+				<p id="destination-status" role="status" aria-live="polite" aria-atomic="true" style="display:none"></p>
 				<div class="action-buttons" id="action-buttons">
 					<button id="clip-btn" class="mod-cta"><!-- Text set by determineMainAction --></button>
 					<div class="menu-btn">

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EdgeEverClient } from './edgeever-client';
-import { saveClip, resolveNotebook } from './edgeever-note-creator';
+import { saveClip, resolveNotebook, parseClipTags } from './edgeever-note-creator';
 import { imageReferences, rewriteImages } from './page-images';
 const settings = {instanceUrl:'https://notes.test',token:'secret'};
 let writes: Array<{path:string;body:any}>;
@@ -23,6 +23,46 @@ function server() {
 }
 afterEach(() => vi.unstubAllGlobals());
 describe('EdgeEver saving', () => {
+ it('uses the edited tags and selected notebook without creating a child', async () => {
+  server();
+  await saveClip(new EdgeEverClient(settings),{content:'body',noteName:'Title',notebookId:'nb',path:'',tags:['clippings','travel'],behavior:'create',sourceUrl:'https://example.org'});
+  expect(writes).toHaveLength(1);
+  expect(writes[0].body).toMatchObject({notebookId:'nb',tags:['clippings','travel']});
+ });
+ it('does not inject tags when the user leaves them empty', async () => {
+  server();
+  await saveClip(new EdgeEverClient(settings),{content:'body',noteName:'Title',notebookId:'nb',path:'',tags:[],behavior:'create',sourceUrl:'https://example.org'});
+  expect(writes[0].body.tags).toEqual([]);
+ });
+ it('parses comma-separated and JSON tag lists without duplicates', () => {
+  expect(parseClipTags(' #clippings, travel, clippings, ,中文 ')).toEqual(['clippings','travel','中文']);
+  expect(parseClipTags('["clippings", "travel", "clippings"]')).toEqual(['clippings','travel']);
+  expect(parseClipTags('')).toEqual([]);
+  expect(()=>parseClipTags('["valid",1]')).toThrow();
+ });
+ it.each(['append-specific','prepend-specific','overwrite'])('updates tags safely for %s', async behavior => {
+  server(); memos=[{id:'m',title:'Title',notebookId:'nb'}]; const original=fetch;
+  vi.stubGlobal('fetch', async (url:string,init:RequestInit={}) => {
+   const response=await original(url,init);
+   if(url==='https://notes.test/api/v1/memos/m') {const data=await response.json();data.memo.tags=['existing'];return Response.json(data);}
+   return response;
+  });
+  await saveClip(new EdgeEverClient(settings),{content:'new',noteName:'Title',notebookId:'nb',path:'',tags:['clippings'],behavior:behavior as any,sourceUrl:'https://example.org'});
+  expect(writes.find(w=>w.path.endsWith('/save'))?.body.tags).toEqual(behavior==='overwrite' ? ['clippings'] : ['existing','clippings']);
+ });
+ it('creates a child only for an explicitly supplied name', async () => {
+  server(); const original=fetch;
+  vi.stubGlobal('fetch',async (url:string,init:RequestInit={}) => {
+   if(url==='https://notes.test/api/v1/notebooks' && init.method==='POST') {
+    const body=JSON.parse(init.body as string);writes.push({path:'/api/v1/notebooks',body});
+    return Response.json({notebook:{id:'child',...body}});
+   }
+   return original(url,init);
+  });
+  await saveClip(new EdgeEverClient(settings),{content:'body',noteName:'Title',notebookId:'nb',path:'Travel',tags:[],behavior:'create',sourceUrl:'https://example.org'});
+  expect(writes[0]).toEqual({path:'/api/v1/notebooks',body:{name:'Travel',parentId:'nb'}});
+  expect(writes[1].body.notebookId).toBe('child');
+ });
  it('creates an editable memo with the unmodified rendered Markdown', async () => {
   server(); const result = await saveClip(new EdgeEverClient(settings),{content:'---\nsource: example\n---\n# Body',noteName:'Title',notebookId:'nb',path:'',behavior:'create',sourceUrl:'https://example.org'});
   expect(writes[0].body).toMatchObject({notebookId:'nb',title:'Title',contentMarkdown:'---\nsource: example\n---\n# Body'});

@@ -20,6 +20,9 @@ const styles=readFileSync('dist/style.css','utf8').toLowerCase();
 for(const purple of ['#895df4','#a68af9','#8a5cf5']) assert.ok(!styles.includes(purple),`Obsidian accent ${purple} shipped`);
 assert.ok(styles.includes('#237a73'),'EdgeEver accent missing from styles');
 for(const page of ['popup.html','side-panel.html']) assert.ok(readFileSync(join('dist',page),'utf8').includes('destination-status'));
+const settingsPage=readFileSync('dist/settings.html','utf8');
+assert.ok(settingsPage.includes('https://github.com/akispho/edgeever-web-clipper'));
+assert.ok(!settingsPage.includes('help-open-btn') && !settingsPage.includes('usage-chart-container'));
 console.log('EdgeEver build checks passed: MV3 identity, entry files, destination isolation, brand UI, status UI.');
 
 await import('./check-extension-runtime.mjs');

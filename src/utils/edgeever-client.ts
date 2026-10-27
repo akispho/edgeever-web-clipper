@@ -55,8 +55,8 @@ export class EdgeEverClient {
   if (!editSession?.id || !Number.isInteger(editSession.baseRevision) || typeof editSession.baseContentHash !== 'string') throw new Error('EdgeEver 编辑会话无效。');
   return editSession;
  }
- async save(id: string, session: EditSession, contentMarkdown: string, overwrite=false): Promise<Memo> {
-  const {memo} = await this.post<{memo:Memo}>(`/api/v1/memos/${encodeURIComponent(id)}/save`,{editSessionId:session.id,expectedRevision:session.baseRevision,expectedContentHash:session.baseContentHash,contentMarkdown,...(overwrite ? {allowDestructiveOverwrite:true} : {})}); return validateMemo(memo);
+ async save(id: string, session: EditSession, contentMarkdown: string, overwrite=false, tags?:string[]): Promise<Memo> {
+  const {memo} = await this.post<{memo:Memo}>(`/api/v1/memos/${encodeURIComponent(id)}/save`,{editSessionId:session.id,expectedRevision:session.baseRevision,expectedContentHash:session.baseContentHash,contentMarkdown,...(tags===undefined ? {} : {tags}),...(overwrite ? {allowDestructiveOverwrite:true} : {})}); return validateMemo(memo);
  }
  async upload(id: string, blob: Blob, name: string, signal?: AbortSignal): Promise<string> {
   const form = new FormData(); form.append('file',blob,name);

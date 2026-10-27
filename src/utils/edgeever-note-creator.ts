@@ -1,12 +1,19 @@
 import { EdgeEverClient, Memo, Notebook, EditSession } from './edgeever-client';
 import type { Template } from '../types/types';
 import { imageReferences, rewriteImages, downloadImage, inlineReferences } from './page-images';
-export interface ClipInput {content:string;noteName:string;notebookId:string;path:string;behavior:Template['behavior'];sourceUrl:string;now?:Date}
+export interface ClipInput {content:string;noteName:string;notebookId:string;path:string;tags?:string[];behavior:Template['behavior'];sourceUrl:string;now?:Date}
 export interface SaveResult {memoId:string;images:number;totalImages:number;warning?:string}
 const behaviors=['create','append-specific','prepend-specific','append-daily','prepend-daily','overwrite'];
 export function validateClip(input:ClipInput):void {
  if(!input || typeof input.content!=='string' || !input.content.trim() || input.content.length>10*1024*1024 || typeof input.noteName!=='string' || typeof input.notebookId!=='string' || typeof input.path!=='string' || !behaviors.includes(input.behavior)) throw new Error('无效的剪藏内容或保存设置。');
  const url=new URL(input.sourceUrl); if(!['http:','https:'].includes(url.protocol)) throw new Error('不支持的剪藏来源地址。');
+ if(input.tags!==undefined && (!Array.isArray(input.tags) || input.tags.some(tag=>typeof tag!=='string'))) throw new Error('无效的笔记标签。');
+}
+export function parseClipTags(value:string):string[] {
+ let items:unknown=value.split(/[,，]/);
+ if(value.trim().startsWith('[')) {try {items=JSON.parse(value);} catch { /* Treat plain text as comma-separated tags. */ }}
+ if(!Array.isArray(items) || items.some(tag=>typeof tag!=='string')) throw new Error('标签必须是文本列表。');
+ return [...new Set(items.map(tag=>tag.trim().replace(/^#+/,'')).filter(Boolean))];
 }
 export function notebookLabel(notebooks:Notebook[],id:string):string {
  const names:string[]=[]; const seen=new Set<string>(); let current=notebooks.find(n=>n.id===id);
@@ -69,8 +76,9 @@ export async function saveClip(client:EdgeEverClient,input:ClipInput):Promise<Sa
    captured=inlineReferences(input.content);
    compose=input.behavior.startsWith('append') ? content=>`${current.contentMarkdown}\n\n${content}` : content=>`${content}\n\n${current.contentMarkdown}`;
   }
-  memo=await client.save(target,session,compose(captured),input.behavior==='overwrite');
- } else { memo=await client.create({notebookId,title,contentMarkdown:input.content,tags:['web-clip']}); }
+  const tags=input.tags===undefined ? undefined : input.behavior==='overwrite' ? input.tags : [...new Set([...(current.tags || []),...input.tags])];
+  memo=await client.save(target,session,compose(captured),input.behavior==='overwrite',tags);
+ } else { memo=await client.create({notebookId,title,contentMarkdown:input.content,tags:input.tags || []}); }
  const result:SaveResult={memoId:memo.id,images:0,totalImages:0};
  // Only images referenced by this capture are downloaded, even when appending to an existing note.
  const urls=[...new Set(imageReferences(captured,input.sourceUrl).map(r=>r.url))].filter(url=>!url.startsWith(`${client.baseUrl}/api/v1/resources/`));

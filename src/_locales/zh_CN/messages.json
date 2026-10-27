@@ -1089,5 +1089,10 @@
 	},
 	"developmentPreview": {
 		"message": "开发预览版 · 本地构建"
-	}
+	},
+	"createSubnotebook": { "message": "新建子笔记本" },
+	"subnotebookName": { "message": "子笔记本名称" },
+	"subnotebookNameRequired": { "message": "请填写新建子笔记本的名称。" },
+	"savingToEdgeEver": { "message": "正在保存到 EdgeEver…" },
+	"savedToEdgeEver": { "message": "已保存到 EdgeEver ✓" }
 }

@@ -45,30 +45,6 @@
 						<form id="general-settings-form">
 							<div class="setting-group">
 								<div class="setting-items">
-									<div id="usage-chart-container">
-										<div class="usage-chart-header">
-											<div class="usage-chart-title">
-												<div class="usage-chart-name" data-i18n="activity">Activity</div>
-												<div class="setting-item-description"></div>
-											</div>
-											<div class="usage-chart-controls">
-												<select id="usage-metric-select" class="dropdown">
-													<option value="saved" selected data-i18n="saved">Saved</option>
-													<option value="read" data-i18n="read">Read</option>
-												</select>
-												<select id="usage-period-select" class="dropdown">
-													<option value="30d" data-i18n="last30Days">Last 30 days</option>
-													<option value="all" data-i18n="allTime">All time</option>
-												</select>
-												<select id="usage-aggregation-select" class="dropdown">
-													<option value="day" selected data-i18n="byDay">Days</option>
-													<option value="week" data-i18n="byWeek">Weeks</option>
-												</select>
-											</div>
-										</div>
-										<div id="usage-chart" class="usage-chart"></div>
-									</div>
-									
 									<div class="setting-item mod-horizontal">
 										<div class="setting-item-info">
 											<label for="language-select" data-i18n="language">Language</label>
@@ -98,19 +74,11 @@
 											</div>
 										</div>
 										<div class="setting-item-control">
-											<a href="https://edgeever.org/" id="changelog-link" class="btn" target="_blank">EdgeEver</a>
+											<a href="https://github.com/akispho/edgeever-web-clipper" id="changelog-link" class="btn" target="_blank" rel="noopener noreferrer">GitHub</a>
 										</div>
 									</div>
 									
-									<div class="setting-item mod-horizontal">
-										<div class="setting-item-info">
-											<label for="help-open-btn" data-i18n="help">Help</label>
-											<div class="setting-item-description" data-i18n="helpDescription">Learn how to use Web Clipper and get help troubleshooting.</div>
-										</div>
-										<div class="setting-item-control">
-											<a href="https://help.obsidian.md/web-clipper" id="help-open-btn" class="btn" target="_blank" data-i18n="open">Open</a>
-										</div>
-									</div>
+
 								</div>
 							</div>
 							<div class="setting-group">
@@ -463,7 +431,7 @@
 										<div class="setting-item-info">
 											<label for="interpreter-toggle" data-i18n="enableInterpreter">Enable interpreter</label>
 											<div class="setting-item-description" data-i18n="enableInterpreterDescription">
-												Use natural language to extract data from pages. For example, you can use the template syntax <strong>{{"a summary of the page"}}</strong>. Requires an API key or custom model configured below. <a href="https://help.obsidian.md/web-clipper/interpreter" target="_blank">Learn more</a>.
+												Use natural language to extract data from pages. For example, you can use the template syntax <strong>{{"a summary of the page"}}</strong>. Requires an API key or custom model configured below. <a href="https://github.com/akispho/edgeever-web-clipper#readme" target="_blank">Learn more</a>.
 											</div>
 										</div>
 										<div class="setting-item-control">
@@ -674,10 +642,10 @@
 											<div class="setting-item-description" data-i18n="noteNameFormatDescription">Format for the file name of the note. You can use variables like {{title}}, {{date}}, and {{published}} to pre-populate data from the page.</div>
 											<input type="text" id="note-name-format" placeholder="{{title}}" />
 										</div>
-										<div class="setting-item" id="path-name-container" style="display: none;">
+										<div class="setting-item" id="path-name-container" style="display: none;" hidden>
 											<label for="template-path-name" data-i18n="noteLocation">Note location</label>
 											<div class="setting-item-description" data-i18n="noteLocationDescription">The folder or path of the note.</div>
-											<input type="text" id="template-path-name" placeholder="Clippings" />
+											<input type="text" id="template-path-name" placeholder="" />
 										</div>
 										<div class="setting-item">
 											<label for="template-vault" data-i18n="vault">Vault</label>
@@ -871,7 +839,7 @@
 					<p data-i18n="feedbackDescription">How can we improve Web Clipper? Please visit our help page, where you can report bugs, suggest features, and get help with common issues.</p>
 				</div>
 				<div class="modal-button-container">
-					<a class="btn mod-cta" href="https://help.obsidian.md/web-clipper/troubleshoot" target="_blank" data-i18n="help">Help</a>
+					<a class="btn mod-cta" href="https://github.com/akispho/edgeever-web-clipper/issues" target="_blank" data-i18n="help">Help</a>
 					<button class="feedback-close-btn" data-i18n="close">Close</button>
 				</div>
 			</div>

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {JSDOM} from 'jsdom';
+import LZString from 'lz-string';
 
 const makeEvent=()=>({listeners:[],addListener(fn){this.listeners.push(fn);},removeListener(){}});
 const area=()=>{
@@ -12,7 +13,7 @@ const tab={id:1,windowId:1,url:'https://example.org/article',title:'Runtime fixt
 const extraction={content:'<article><h1>Runtime fixture</h1><p>Captured article body.</p></article>',selectedHtml:'',extractedContent:{},schemaOrgData:{},fullHtml:'<html><body>Captured article body.</body></html>',highlights:[],title:'Runtime fixture',author:'Fixture',description:'Runtime test',domain:'example.org',favicon:'',image:'',published:'',site:'Example',wordCount:4,language:'en',metaTags:[]};
 function makeBrowser(){
  return {
-  runtime:{id:'fixture',getURL:path=>'chrome-extension://fixture/'+path,getManifest:()=>({version:'0.1.1'}),onMessage:makeEvent(),onInstalled:makeEvent(),onConnect:makeEvent(),connect:()=>({onDisconnect:makeEvent(),onMessage:makeEvent(),postMessage(){}}),sendMessage:async request=>{
+  runtime:{id:'fixture',getURL:path=>'chrome-extension://fixture/'+path,getManifest:()=>({version:JSON.parse(readFileSync('package.json','utf8')).version}),onMessage:makeEvent(),onInstalled:makeEvent(),onConnect:makeEvent(),connect:()=>({onDisconnect:makeEvent(),onMessage:makeEvent(),postMessage(){}}),sendMessage:async request=>{
    switch(request.action){
     case 'getActiveTab':return {tabId:1};
     case 'getTabInfo':return {success:true,tab};
@@ -39,10 +40,20 @@ console.log('Worker runtime PASS: shipped background bundle boots without a DOM.
 
 // Exercise the shipped popup bundle and real template/UI code against synthetic
 // WebExtension boundaries; this is not a real-profile or live-instance test.
-const popup=new JSDOM(readFileSync('dist/popup.html','utf8'),{url:'https://fixture.test/popup.html',runScripts:'outside-only',pretendToBeVisual:true});
+for(const popupPage of ['popup.html','side-panel.html']) {
+const popup=new JSDOM(readFileSync('dist/'+popupPage,'utf8'),{url:'https://fixture.test/popup.html',runScripts:'outside-only',pretendToBeVisual:true});
 try {
  await new Promise(resolve=>popup.window.addEventListener('DOMContentLoaded',resolve,{once:true}));
  popup.window.browser=makeBrowser();popup.window.chrome=popup.window.browser;
+ const legacyTemplate={id:'legacy',name:'Default',behavior:'create',noteNameFormat:'{{title}}',path:'Clippings',noteContentFormat:'{{content}}',context:'',properties:[{id:'tags',name:'tags',value:'clippings'}],triggers:[]};
+ await popup.window.browser.storage.sync.set({template_list:['legacy'],template_legacy:[LZString.compressToUTF16(JSON.stringify(legacyTemplate))]});
+ const messages=[]; let finishSave;
+ const originalSend=popup.window.browser.runtime.sendMessage;
+ popup.window.browser.runtime.sendMessage=async request=>{
+  if(request.action==='edgeever-connection') return {ok:true,result:{instanceUrl:'https://notes.test',notebookId:'nb',notebooks:[{id:'nb',name:'Inbox',parentId:null}],hasToken:true}};
+  if(request.action==='edgeever-save') {messages.push(request.clip);return new Promise(resolve=>{finishSave=resolve;});}
+  return originalSend(request);
+ };
  popup.window.structuredClone=structuredClone;
  popup.window.eval(readFileSync('dist/popup.js','utf8'));
  popup.window.document.dispatchEvent(new popup.window.Event('DOMContentLoaded'));
@@ -53,8 +64,45 @@ try {
  assert.ok(doc.querySelector('#clip-btn').textContent.includes('EdgeEver'),'Popup save action has no label');
  assert.ok(doc.querySelector('#note-content-field').value.includes('Captured article body.'),'Popup failed to render extracted content: '+doc.querySelector('.error-message').textContent);
  assert.notEqual(doc.querySelector('.clipper').style.display,'none');
- console.log('Popup runtime PASS: templates, save label and captured body render without configured credentials.');
+ const path=doc.querySelector('#path-name-field');
+ const create=doc.querySelector('#create-subnotebook');
+ const button=doc.querySelector('#clip-btn');
+ const status=doc.querySelector('#destination-status');
+ assert.equal(path.value,'','Legacy Clippings path must not be applied automatically');
+ assert.equal(path.disabled,true);
+ assert.equal(create.checked,false);
+ assert.ok(doc.querySelector('.clipper-footer').contains(status),'Save status must be next to the action');
+ assert.equal(status.nextElementSibling.id,'action-buttons');
+ doc.querySelector('.metadata-property input#tags').value='clippings,travel';
+ const waitFor=async predicate=>{const deadline=Date.now()+3000;while(!predicate() && Date.now()<deadline) await new Promise(resolve=>setTimeout(resolve,10));assert.ok(predicate(),'Timed out waiting for save UI');};
+ button.click();
+ await waitFor(()=>messages.length===1);
+ assert.equal(button.disabled,true);
+ assert.ok(button.textContent.includes('Saving'));
+ assert.equal(status.dataset.state,'saving');
+ assert.equal(messages[0].notebookId,'nb');
+ assert.equal(messages[0].path,'');
+ assert.deepEqual(Array.from(messages[0].tags),['clippings','travel']);
+ finishSave({ok:true,result:{memoId:'m',images:0,totalImages:0}});
+ await waitFor(()=>status.dataset.state==='success');
+ assert.equal(button.disabled,false);
+ create.click();
+ assert.equal(path.disabled,false);
+ button.click();
+ await waitFor(()=>status.dataset.state==='error');
+ assert.equal(messages.length,1,'Blank child names must not send a save');
+ path.value='Travel';
+ button.click();
+ await waitFor(()=>messages.length===2);
+ assert.equal(messages[1].path,'Travel');
+ finishSave({ok:true,result:{memoId:'m2',images:0,totalImages:1,warning:'Image retained remotely'}});
+ await waitFor(()=>status.dataset.state==='warning');
+ assert.equal(status.textContent,'Image retained remotely');
+ create.click();
+ assert.equal(path.value,'');
+ console.log('Popup runtime PASS: legacy path ignored, edited tags sent, explicit child creation, adjacent saving/success/warning/error status.');
 } finally {popup.window.close();}
+}
 
 const failedPopup=new JSDOM(readFileSync('dist/popup.html','utf8'),{url:'https://fixture.test/popup.html',runScripts:'outside-only'});
 const rejected=[];

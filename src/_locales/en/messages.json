@@ -1089,5 +1089,10 @@
 	},
 	"developmentPreview": {
 		"message": "Development preview — local build"
-	}
+	},
+	"createSubnotebook": { "message": "New sub-notebook" },
+	"subnotebookName": { "message": "Sub-notebook name" },
+	"subnotebookNameRequired": { "message": "Enter a name for the new sub-notebook." },
+	"savingToEdgeEver": { "message": "Saving to EdgeEver…" },
+	"savedToEdgeEver": { "message": "Saved to EdgeEver ✓" }
 }

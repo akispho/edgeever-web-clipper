@@ -1094,5 +1094,10 @@
 	},
 	"version": {
 		"message": "版本"
-	}
+	},
+	"createSubnotebook": { "message": "新增子筆記本" },
+	"subnotebookName": { "message": "子筆記本名稱" },
+	"subnotebookNameRequired": { "message": "請填寫新增子筆記本的名稱。" },
+	"savingToEdgeEver": { "message": "正在儲存至 EdgeEver…" },
+	"savedToEdgeEver": { "message": "已儲存至 EdgeEver ✓" }
 }

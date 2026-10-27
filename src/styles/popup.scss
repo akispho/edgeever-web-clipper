@@ -157,15 +157,39 @@
 	.vault-path-container {
 		display: flex;
 		flex-direction: row;
+		flex-wrap: wrap;
 		gap: 0.625rem;
 		#vault-container {
 			flex-grow: 1;
+			min-width: 0;
+			flex-basis: 100%;
 		}
 		#vault-select {
+			width: 100%;
 			font-weight: var(--clipper-select-font-weight);
 			min-width: 100px;
 			cursor: default;
 		}
+		#path-name-field { flex: 1; min-width: 100px; }
+	}
+	#notebook-create-container {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: var(--font-ui-smaller);
+		color: var(--text-muted);
+	}
+	#destination-status {
+		margin: 0;
+		padding: 0.5rem 0.75rem;
+		border: 1px solid var(--background-modifier-border);
+		border-radius: var(--radius-m);
+		background-color: var(--background-secondary);
+		font-size: var(--font-ui-smaller);
+		white-space: pre-wrap;
+		&[data-state='saving'] { color: var(--text-muted); }
+		&[data-state='success'] { color: var(--text-accent); }
+		&[data-state='warning'], &[data-state='error'] { color: var(--text-warning); }
 	}
 }
 

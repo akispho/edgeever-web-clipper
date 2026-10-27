@@ -167,7 +167,7 @@ export function showTemplateEditor(template: Template | null): void {
 			name: newTemplateName,
 			behavior: 'create',
 			noteNameFormat: '{{title}}',
-			path: 'Clippings',
+			path: '',
 			noteContentFormat: '{{content}}',
 			properties: [],
 			triggers: [],
@@ -286,7 +286,6 @@ export function showTemplateEditor(template: Template | null): void {
 function updateBehaviorFields(): void {
 	const behaviorSelect = document.getElementById('template-behavior') as HTMLSelectElement;
 	const noteNameFormatContainer = document.getElementById('note-name-format-container');
-	const pathContainer = document.getElementById('path-name-container');
 	const noteNameFormat = document.getElementById('note-name-format') as HTMLInputElement;
 
 	if (behaviorSelect) {
@@ -294,7 +293,6 @@ function updateBehaviorFields(): void {
 		const isDailyNote = selectedBehavior === 'append-daily' || selectedBehavior === 'prepend-daily';
 
 		if (noteNameFormatContainer) noteNameFormatContainer.style.display = isDailyNote ? 'none' : 'block';
-		if (pathContainer) pathContainer.style.display = isDailyNote ? 'none' : 'block';
 
 		if (noteNameFormat) {
 			noteNameFormat.required = !isDailyNote;
@@ -582,7 +580,7 @@ function clearTemplateEditor(): void {
 	if (templateName) templateName.value = '';
 	if (templateProperties) templateProperties.textContent = '';
 	const pathInput = document.getElementById('template-path-name') as HTMLInputElement;
-	if (pathInput) pathInput.value = 'Clippings';
+	if (pathInput) pathInput.value = '';
 	const triggersTextarea = document.getElementById('url-patterns') as HTMLTextAreaElement;
 	if (triggersTextarea) triggersTextarea.value = '';
 	const templateEditor = document.getElementById('template-editor');

@@ -3,7 +3,7 @@
 ## Confirmed locally
 
 - Upstream baseline: 214 tests pass in the fixture’s expected America/Los_Angeles timezone; the original Shanghai-timezone run failed only the fixed-date YouTube template timestamp expectation.
-- Adapted project: 242 tests pass across 22 files. New coverage includes URL normalization and credential boundaries, all six save behaviors, ambiguous titles across pagination, stale notebook IDs, version conflicts, partial image transfer, image authentication isolation, CommonMark image references/code examples, and destination settings UI recovery.
+- Adapted project: 250 tests pass across 22 files. New coverage includes URL normalization and credential boundaries, all six save behaviors, ambiguous titles across pagination, stale notebook IDs, version conflicts, partial image transfer, image authentication isolation, CommonMark image references/code examples, and destination settings UI recovery.
 - `npm run typecheck`: pass.
 - `npm run build:chrome`: pass. Three inherited webpack bundle-size/performance warnings remain; they are not suppressed.
 - `npm run verify:build`: pass. Checks MV3 identity, required entry files, the root MIT license, absence of Obsidian URI saving in browser bundles, credential database isolation to the background bundle, and status UI.
@@ -41,3 +41,12 @@ Conservative behavior: append/prepend into a note with meaningful contentJson bu
 ## Publication preparation
 
 The public repository is https://github.com/akispho/edgeever-web-clipper. Publish only `main`, not all local branches: the local development baseline included upstream marketing/native-wrapper assets that are excluded from the released source snapshot. Release artifacts and checksums are distributed through GitHub Releases.
+
+## Version 0.1.3 regression checks (2026-10-27)
+
+- User-edited comma-separated/JSON tags are sent as native EdgeEver tags; empty tags stay empty. Appends merge tags and overwrite uses the submitted tags.
+- Shipped popup and side-panel bundles were exercised with a persisted legacy template containing `path: Clippings`. Both save directly to the selected notebook unless the user explicitly enables child creation and supplies a name.
+- Saving disables/relabels the action button. Saving, success, warning and validation-error status appear immediately above it in the footer.
+- General settings no longer contain the empty activity block or the Help row. The version link points to this project on GitHub.
+- TypeScript, 250 tests, Chromium production build, worker boot and shipped UI runtime checks passed. Production webpack still reports its three inherited bundle-size warnings.
+- The new version has not been verified against the user's live EdgeEver instance or installed browser profile. Synthetic runtime checks do not replace that acceptance check.
